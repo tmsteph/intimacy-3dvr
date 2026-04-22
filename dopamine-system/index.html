@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3dvr Dopamine System</title>
+  <style>
+    :root {
+      --bg: #07131d;
+      --card: #0f1d2b;
+      --card-strong: #162a3d;
+      --text: #ffffff;
+      --muted: #b9c6d2;
+      --primary: #4da3ff;
+      --danger: #ff5c5c;
+      --success: #5cff9d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    main {
+      width: min(100%, 760px);
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    h1,
+    h2 {
+      margin: 0 0 12px;
+      line-height: 1.1;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 8vw, 3rem);
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .scale-row {
+      display: grid;
+      grid-template-columns: 72px 1fr 2ch;
+      gap: 12px;
+      align-items: center;
+      margin: 12px 0;
+      color: var(--muted);
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    button {
+      padding: 10px 12px;
+      margin: 5px 5px 5px 0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: var(--primary);
+      color: #000000;
+    }
+
+    .danger {
+      background: var(--danger);
+      color: #000000;
+    }
+
+    .success {
+      background: var(--success);
+      color: #000000;
+    }
+
+    ul {
+      padding-left: 20px;
+      margin-bottom: 0;
+    }
+
+    li {
+      margin: 6px 0;
+      color: var(--muted);
+    }
+
+    .status {
+      min-height: 24px;
+      color: var(--success);
+      font-weight: 700;
+    }
+
+    @media (max-width: 560px) {
+      body {
+        padding: 14px;
+      }
+
+      .scale-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>⚡ 3dvr Dopamine System</h1>
+      <a href="../">Back to main page</a>
+    </header>
+
+    <section class="card">
+      <h2>Daily Check-In</h2>
+
+      <label class="scale-row">
+        <span>Energy</span>
+        <input type="range" min="1" max="10" value="5" id="energy" />
+        <strong id="energyValue">5</strong>
+      </label>
+
+      <label class="scale-row">
+        <span>Focus</span>
+        <input type="range" min="1" max="10" value="5" id="focus" />
+        <strong id="focusValue">5</strong>
+      </label>
+
+      <label class="scale-row">
+        <span>Urge</span>
+        <input type="range" min="1" max="10" value="5" id="urge" />
+        <strong id="urgeValue">5</strong>
+      </label>
+
+      <button class="primary" type="button" onclick="saveCheckin()">Save</button>
+      <button class="success" type="button" onclick="clearLog()">Clear Log</button>
+      <p class="status" id="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card">
+      <h2>⚠️ I Need Dopamine</h2>
+      <button class="danger" type="button" onclick="redirect('pushups')">Do Pushups</button>
+      <button class="danger" type="button" onclick="redirect('build')">Build Something</button>
+      <button class="danger" type="button" onclick="redirect('outreach')">Send Outreach</button>
+    </section>
+
+    <section class="card">
+      <h2>Log</h2>
+      <ul id="log"></ul>
+    </section>
+  </main>
+
+  <script>
+    const energy = document.getElementById('energy')
+    const focus = document.getElementById('focus')
+    const urge = document.getElementById('urge')
+    const status = document.getElementById('status')
+
+    function saveCheckin() {
+      const entry = {
+        time: new Date().toLocaleTimeString(),
+        energy: energy.value,
+        focus: focus.value,
+        urge: urge.value
+      }
+      const log = JSON.parse(localStorage.getItem('dopamineLog') || '[]')
+      log.push(entry)
+      localStorage.setItem('dopamineLog', JSON.stringify(log))
+      status.innerText = 'Saved'
+      render()
+    }
+
+    function redirect(type) {
+      const actions = {
+        pushups: 'Drop and do 10 pushups.',
+        build: 'Open a project and ship one small improvement.',
+        outreach: 'Send one direct message or email.'
+      }
+      status.innerText = actions[type] || 'Pick one action and start.'
+    }
+
+    function clearLog() {
+      localStorage.removeItem('dopamineLog')
+      status.innerText = 'Log cleared'
+      render()
+    }
+
+    function syncRangeValue(input) {
+      const output = document.getElementById(`${input.id}Value`)
+      output.innerText = input.value
+    }
+
+    function render() {
+      const log = JSON.parse(localStorage.getItem('dopamineLog') || '[]')
+      const ul = document.getElementById('log')
+      ul.innerHTML = ''
+
+      if (!log.length) {
+        const li = document.createElement('li')
+        li.innerText = 'No check-ins yet.'
+        ul.appendChild(li)
+        return
+      }
+
+      log.slice(-5).reverse().forEach((entry) => {
+        const li = document.createElement('li')
+        li.innerText = `${entry.time} | E:${entry.energy} F:${entry.focus} U:${entry.urge}`
+        ul.appendChild(li)
+      })
+    }
+
+    ;[energy, focus, urge].forEach((input) => {
+      syncRangeValue(input)
+      input.addEventListener('input', () => syncRangeValue(input))
+    })
+
+    render()
+  </script>
+</body>
+</html>
